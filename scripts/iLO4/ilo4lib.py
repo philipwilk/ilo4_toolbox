@@ -2,7 +2,7 @@ import os
 from ctypes import *
 from struct import pack
 import uuid
-
+import codecs
 
 DEVICES = {
     uuid.UUID("9d7b312fe3c9764dbff6b9d0d085a952"): "ILO",
@@ -58,11 +58,11 @@ class SignatureParams(LittleEndianStructure):
         return str(bytearray(byte_array))
 
     def dump(self):
-        print "  > signature size    : 0x%x" % self.sig_size
-        print "  > modulus"
-        print hexdump(self.to_str(self.modulus))
-        print "  > exponent"
-        print hexdump(self.to_str(self.exponent))
+        print(f"  > signature size    : 0x{self.sig_size}")
+        print("  > modulus")
+        print(f"{hexdump(self.to_str(self.modulus))}")
+        print("  > exponent")
+        print(f"{hexdump(self.to_str(self.exponent))}")
 
 
 class HpImageHeader(LittleEndianStructure):
@@ -91,30 +91,30 @@ class HpImageHeader(LittleEndianStructure):
         return str(bytearray(byte_array))
 
     def dump(self):
-        print "  > img_magic          : %s" % self.to_str(self.img_magic)
-        print "  > version major      : 0x%x" % self.major
-        print "  > version minor      : 0x%x" % self.minor
-        print "  > field_A            : 0x%02x" % self.field_A
+        print(f"  > img_magic          : {self.to_str(self.img_magic)}")
+        print(f"  > version major      : 0x{self.major}")
+        print(f"  > version minor      : 0x{self.minor}")
+        print(f"  > field_A            : 0x{self.field_A}")
 
         dev = ""
-        dev_id = uuid.UUID(self.to_str(self.device_id).encode("hex"))
+        dev_id = uuid.UUID(self.to_str(codecs.encode(self.device_id, 'hex')))
         if dev_id in DEVICES:
             dev = DEVICES[dev_id]
 
-        print "  > device id          : %s" % dev
-        print hexdump(self.to_str(self.device_id))
-        print "  > field_1C            : 0x%x" % self.field_1C
-        print "  > field_20            : 0x%x" % self.field_20
-        print "  > field_24            : 0x%x" % self.field_24
-        print "  > field_28            : 0x%x" % self.field_28
-        print "  > field_2C            : 0x%x" % self.field_2C
-        print "  > field_30            : 0x%x" % self.field_30
-        print "  > field_34            : 0x%x" % self.field_34
-        print "  > field_38            : 0x%x" % self.field_38
-        print "  > field_3C            : 0x%x" % self.field_3C
-        print "  > version             : %s" % self.to_str(self.version)
-        print "  > name                : %s" % self.to_str(self.name)
-        print "  > gap"
+        print(f"  > device id          : {dev}")
+        print(f"{hexdump(self.to_str(self.device_id))}")
+        print(f"  > field_1C            : 0x{self.field_1C}")
+        print(f"  > field_20            : 0x{self.field_20}")
+        # print "  > field_24            : 0x%x" % self.field_24
+        # print "  > field_28            : 0x%x" % self.field_28
+        # print "  > field_2C            : 0x%x" % self.field_2C
+        # print "  > field_30            : 0x%x" % self.field_30
+        # print "  > field_34            : 0x%x" % self.field_34
+        # print "  > field_38            : 0x%x" % self.field_38
+        # print "  > field_3C            : 0x%x" % self.field_3C
+        # print "  > version             : %s" % self.to_str(self.version)
+        # print "  > name                : %s" % self.to_str(self.name)
+        # print "  > gap"
 
 
 class BootloaderHeader(LittleEndianStructure):
@@ -139,19 +139,19 @@ class BootloaderHeader(LittleEndianStructure):
         return str(bytearray(byte_array))
 
     def dump(self):
-        print "  > magic              : %s" % self.to_str(self.ilO_magic)
-        print "  > build_version      : %s" % self.build_version.split("\x1A")[0].strip()
-        print "  > type               : 0x%02x" % self.type
-        print "  > compression_type   : 0x%02x" % self.compression_type
-        print "  > field_24           : 0x%x" % self.field_24
-        print "  > field_28           : 0x%x" % self.field_28
-        print "  > load_address       : 0x%x" % self.load_address
-        print "  > total_size         : 0x%x" % self.total_size
-        print "  > field_34           : 0x%x" % self.field_34
-        print "  > field_38           : 0x%x" % self.field_38
-        print "  > field_3C           : 0x%x" % self.field_3C
-        print "  > signature"
-        print hexdump(self.to_str(self.signature))
+        print(f"  > magic              : {self.to_str(self.ilO_magic)}")
+        # print "  > build_version      : %s" % self.build_version.split("\x1A")[0].strip()
+        # print "  > type               : 0x%02x" % self.type
+        # print "  > compression_type   : 0x%02x" % self.compression_type
+        # print "  > field_24           : 0x%x" % self.field_24
+        # print "  > field_28           : 0x%x" % self.field_28
+        # print "  > load_address       : 0x%x" % self.load_address
+        # print "  > total_size         : 0x%x" % self.total_size
+        # print "  > field_34           : 0x%x" % self.field_34
+        # print "  > field_38           : 0x%x" % self.field_38
+        # print "  > field_3C           : 0x%x" % self.field_3C
+        # print "  > signature"
+        # print hexdump(self.to_str(self.signature))
 
 
 class BootloaderFooter(LittleEndianStructure):
@@ -173,16 +173,16 @@ class BootloaderFooter(LittleEndianStructure):
         return str(bytearray(byte_array))
 
     def dump(self):
-        print "  > magic               : %s" % self.to_str(self.ilO_magic)
-        print "  > build_version       : %s" % self.build_version.split("\x1A")[0].strip()
-        print "  > field_20            : 0x%x" % self.field_20
-        print "  > field_24            : 0x%x" % self.field_24
-        print "  > kernel offset       : 0x%x" % self.kernel_offset
-        print "  > field_2C            : 0x%x" % self.field_2C
-        print "  > field_30            : 0x%x" % self.field_30
-        print "  > field_34            : 0x%x" % self.field_34
-        print "  > field_38            : 0x%x" % self.field_38
-        print "  > sig params offset   : 0x%x" % ((~self.sig_offset + 1) & 0xFFFF)
+        print(f"  > magic               : {self.to_str(self.ilO_magic)}")
+        # print "  > build_version       : %s" % self.build_version.split("\x1A")[0].strip()
+        # print "  > field_20            : 0x%x" % self.field_20
+        # print "  > field_24            : 0x%x" % self.field_24
+        # print "  > kernel offset       : 0x%x" % self.kernel_offset
+        # print "  > field_2C            : 0x%x" % self.field_2C
+        # print "  > field_30            : 0x%x" % self.field_30
+        # print "  > field_34            : 0x%x" % self.field_34
+        # print "  > field_38            : 0x%x" % self.field_38
+        # print "  > sig params offset   : 0x%x" % ((~self.sig_offset + 1) & 0xFFFF)
 
 
 class ImgHeader(LittleEndianStructure):
@@ -207,19 +207,19 @@ class ImgHeader(LittleEndianStructure):
         return str(bytearray(byte_array))
 
     def dump(self):
-        print "  > magic              : %s" % self.to_str(self.ilO_magic)
-        print "  > build_version      : %s" % self.build_version.split("\x1A")[0].strip()
-        print "  > type               : 0x%02x" % self.type
-        print "  > compression_type   : 0x%02x" % self.compression_type
-        print "  > field_24           : 0x%x" % self.field_24
-        print "  > field_28           : 0x%x" % self.field_28
-        print "  > decompressed_size  : 0x%x" % self.decompressed_size
-        print "  > raw_size           : 0x%x" % self.raw_size
-        print "  > load_address       : 0x%x" % self.load_address
-        print "  > field_38           : 0x%x" % self.field_38
-        print "  > field_3C           : 0x%x" % self.field_3C
-        print "  > signature"
-        print hexdump(self.to_str(self.signature))
+        print(f" > magic              : {self.to_str(self.ilO_magic)}")
+        # print "  > build_version      : %s" % self.build_version.split("\x1A")[0].strip()
+        # print "  > type               : 0x%02x" % self.type
+        # print "  > compression_type   : 0x%02x" % self.compression_type
+        # print "  > field_24           : 0x%x" % self.field_24
+        # print "  > field_28           : 0x%x" % self.field_28
+        # print "  > decompressed_size  : 0x%x" % self.decompressed_size
+        # print "  > raw_size           : 0x%x" % self.raw_size
+        # print "  > load_address       : 0x%x" % self.load_address
+        # print "  > field_38           : 0x%x" % self.field_38
+        # print "  > field_3C           : 0x%x" % self.field_3C
+        # print "  > signature"
+        # print hexdump(self.to_str(self.signature))
 
 
 # decompress extracted images

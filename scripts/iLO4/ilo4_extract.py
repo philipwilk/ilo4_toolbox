@@ -11,10 +11,10 @@ from struct import unpack_from
 from collections import OrderedDict
 
 
-BEGIN_SIGN = "--=</Begin HP Signed File Fingerprint\>=--\n"
-END_SIGN = "--=</End HP Signed File Fingerprint\>=--\n"
-BEGIN_CERT = "-----BEGIN CERTIFICATE-----\n"
-END_CERT = "-----END CERTIFICATE-----\n"
+BEGIN_SIGN = b"--=</Begin HP Signed File Fingerprint\>=--\n"
+END_SIGN = b"--=</End HP Signed File Fingerprint\>=--\n"
+BEGIN_CERT = b"-----BEGIN CERTIFICATE-----\n"
+END_CERT = b"-----END CERTIFICATE-----\n"
 
 IMG_LIST = ["elf", "kernel_main", "kernel_recovery"]
 
@@ -24,7 +24,7 @@ IMG_HDR_SIZE = 0x440
 
 
 if len(sys.argv) != 3:
-    print "usage: %s <filename> <outdir>" % sys.argv[0]
+    print(f"usage: {sys.argv[0]} <filename> <outdir>")
     sys.exit(1)
 
 filename = sys.argv[1]
@@ -43,7 +43,7 @@ global_offset = 0
 # extract certificates
 
 if not data.startswith(BEGIN_SIGN):
-    print "[-] Bad file format\n    No \"%s\" signature" % BEGIN_SIGN.rstrip()
+    print(f"[-] Bad file format\n    No \"{BEGIN_SIGN.rstrip()}\" signature")
     sys.exit(1)
 
 off = data.find(END_SIGN) + len(END_SIGN)
@@ -60,7 +60,7 @@ while data.startswith(BEGIN_CERT):
     data = data[off:]
     offsets_map["HP_CERT%d" % cert_num] = global_offset
     global_offset += off
-    print "[+] Extracting certificate %d" % cert_num
+    print(f"[+] Extracting certificate {cert_num}")
     with open(outdir + "/cert%d.x509" % cert_num, "wb") as fff:
         fff.write(cert_data)
     cert_num += 1
@@ -69,8 +69,8 @@ while data.startswith(BEGIN_CERT):
 #------------------------------------------------------------------------------
 # extract HP images: userland, kernel and bootloader
 
-if not data.startswith("HPIMAGE"):
-    print "[-] Bad file format\n    HPIMAGE magic not found"
+if not data.startswith(b"HPIMAGE"):
+    print(f"[-] Bad file format\n    HPIMAGE magic not found")
     sys.exit(1)
 
 hpimage_header = data[:HPIMAGE_HDR_SIZE]
@@ -79,7 +79,7 @@ data = data[HPIMAGE_HDR_SIZE:]
 offsets_map["HPIMAGE_HDR"] = global_offset
 global_offset += HPIMAGE_HDR_SIZE
 
-print "[+] iLO HPIMAGE header :"
+print("[+] iLO HPIMAGE header :")
 
 with open(outdir + "/hpimage.hdr", "wb") as fff:
     fff.write(hpimage_header)
@@ -93,7 +93,7 @@ img_hdr.dump()
 
 targetListsize = unpack_from("<L", data)[0]
 
-print "\n[+] iLO target list: %x element(s)" % (targetListsize)
+print(f"\n[+] iLO target list: {targetListsize} element(s)")
 
 data = data[4:]
 global_offset += 4
@@ -101,15 +101,15 @@ global_offset += 4
 for i in range(targetListsize):
     raw = data[:0x10]
     dev = ""
-    id = uuid.UUID(raw.encode("hex"))
+    id = uuid.UUID(raw.encode().hex())
     if id in TARGETS:
         dev = TARGETS[id]
 
-    print "    target 0x%x (%s)" % (i, dev)
-    print hexdump(raw)
+    print(f"    target 0x{i} ({dev})")
+    print(f"{hexdump(raw)}")
 
     if dev == "":
-        print "[x] unknown target"
+        print("[x] unknown target")
         sys.exit(0)
 
     data = data[0x10:]
@@ -130,7 +130,7 @@ data = data[BOOTLOADER_HDR_SIZE:]
 offsets_map["BOOTLOADER_HDR"] = global_offset
 global_offset += BOOTLOADER_HDR_SIZE
 
-print "[+] iLO bootloader header : %s" % (ilo_bootloader_header[:0x1a])
+print(f"[+] iLO bootloader header : {ilo_bootloader_header[:0x1a]}")
 
 with open(outdir + "/bootloader.hdr", "wb") as fff:
     fff.write(ilo_bootloader_header)
@@ -145,16 +145,15 @@ with open(outdir + "/bootloader.sig", "wb") as fff:
 #------------------------------------------------------------------------------
 # extract Bootloader footer and cryptographic parameters
 
-print "[+] iLO Bootloader footer : %s" % (ilo_bootloader_footer[:0x1a])
-
+print(f"[+] iLO Bootloader footer : {ilo_bootloader_footer[:0x1a]}")
 bootloader_footer = BootloaderFooter.from_buffer_copy(ilo_bootloader_footer)
 bootloader_footer.dump()
 
 total_size = bootloader_header.total_size
 
-print "\ntotal size:    0x%08x" % total_size
-print "payload size:  0x%08x" % len(data)
-print "kernel offset: 0x%08x\n" % bootloader_footer.kernel_offset
+print(f"\ntotal size:    0x{total_size}")
+print(f"payload size:  0x{len(data)}")
+print(f"kernel offset: 0x{bootloader_footer.kernel_offset}\n")
 
 offsets_map["BOOTLOADER"] = global_offset + total_size - bootloader_footer.kernel_offset - BOOTLOADER_HDR_SIZE
 ilo_bootloader = data[-bootloader_footer.kernel_offset:-BOOTLOADER_HDR_SIZE]
@@ -198,7 +197,7 @@ while off >= 0:
     with open(outdir + "/%s.hdr" % IMG_LIST[ilo_num], "wb") as fff:
         fff.write(ilo_header)
 
-    print "[+] iLO Header %d: %s" % (ilo_num, ilo_header[:0x1a])
+    print(f"[+] iLO Header {ilo_num}: {ilo_header[0x1a]}")
 
     img_header = ImgHeader.from_buffer_copy(ilo_header)
     img_header.dump()
@@ -228,12 +227,12 @@ while off >= 0:
     with open(outdir + "/%s.raw" % IMG_LIST[ilo_num], "wb") as fff:
         fff.write(data1)
 
-    print "[+] Decompressing"
+    print("[+] Decompressing")
 
     output_size = decompress_all(data1, outdir + "/%s.bin" % IMG_LIST[ilo_num])
-    print "    decompressed size : 0x%08x\n" % (output_size)
+    print(f"    decompressed size : 0x{output_size}\n")
 
-    print "[+] Extracted %s.bin" % IMG_LIST[ilo_num]
+    print(f"[+] Extracted {IMG_LIST[ilo_num]}.bin")
 
     off = data.find(ilo_sign)
 
@@ -245,11 +244,11 @@ while off >= 0:
 #------------------------------------------------------------------------------
 # output offsets map
 
-print "[+] Firmware offset map"
+print("[+] Firmware offset map")
 for part, offset in offsets_map.iteritems():
-    print "  > %20s at 0x%08x" % (part, offset)
+    print(f"  > {part}s at 0x{offset}")
 
 with open(outdir + "/firmware.map", "wb") as fff:
     fff.write(json.dumps(offsets_map, sort_keys=True, indent=4, separators=(',', ': ')))
 
-print "\n> done\n"
+print("\n> done\n")
