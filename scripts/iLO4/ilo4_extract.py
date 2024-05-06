@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 # Extract binaries from HPIMAGE update file
 # Blackbox analysis, might be inaccurate

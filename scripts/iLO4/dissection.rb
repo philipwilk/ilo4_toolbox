@@ -157,7 +157,7 @@ class TaskDef
         Dir.mkdir(SCRIPT_DIR) if not Dir.exists? SCRIPT_DIR
         File.open(script_name, 'wb'){|fd|
             fd.puts <<EOS
-#!/usr/bin/python
+#!/usr/bin/env python3
 import os
 import os.path
 
